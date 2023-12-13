@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Parses field information to determine data key name/value pair associated with the field.
@@ -37,6 +39,9 @@ public class FieldInfo {
 
   /** Cached field information. */
   private static final Map<Field, FieldInfo> CACHE = new WeakHashMap<Field, FieldInfo>();
+
+  /** Protect accesses to static data structures from [Field]. */
+  private static final Lock lock = new ReentrantLock();
 
   /**
    * Returns the field information for the given enum value.
@@ -191,7 +196,12 @@ public class FieldInfo {
    * @since 1.4
    */
   public Type getGenericType() {
-    return field.getGenericType();
+    try {
+      lock.lock();
+      return field.getGenericType();
+    } finally {
+      lock.unlock();
+    }
   }
 
   /**
